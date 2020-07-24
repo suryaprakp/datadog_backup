@@ -12,9 +12,7 @@ module DatadogBackup
       @opts[:action]
     end
 
-    def all_files!
-      ::Dir.glob(::File.join(backup_dir, '**', '*')).select { |f| ::File.file?(f) }
-    end
+
 
     def all_ids
       all_files!.map { |file| ::File.basename(file, '.*') }
@@ -25,7 +23,7 @@ module DatadogBackup
     end
 
     ##
-    # subclass is expected to implement #backup!
+    # subclass is expected to implement #backup
     ##
 
     def backup_dir
@@ -55,7 +53,7 @@ module DatadogBackup
     end
 
     def diff(id)
-      current = get_by_id(id)
+      current = class_from_id(id).public_send(:get_by_id, id)
       filesystem = load_by_id(id)
       Hashdiff.diff(current, filesystem)
     end
@@ -75,9 +73,7 @@ module DatadogBackup
       ::File.join(mydir, "#{id}.#{output_format.to_s}")
     end
 
-    def find_file!(id)
-      ::Dir.glob(::File.join(backup_dir, '**', "#{id}.*")).first
-    end
+
 
 
     def get_by_id(id)
