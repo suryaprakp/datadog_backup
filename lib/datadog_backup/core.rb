@@ -7,15 +7,10 @@ require 'awesome_print'
 
 module DatadogBackup
   class Core
+    include ::DatadogBackup::LocalFilesystem
 
     def action
       @opts[:action]
-    end
-
-
-
-    def all_ids
-      all_files!.map { |file| ::File.basename(file, '.*') }
     end
 
     def backup
@@ -26,14 +21,6 @@ module DatadogBackup
     # subclass is expected to implement #backup
     ##
 
-    def backup_dir
-      @opts[:backup_dir]
-    end
-
-    def class_from_id(id)
-      class_string = ::File.dirname(find_file!(id)).split('/').last.capitalize
-      ::DatadogBackup.const_get(class_string)
-    end
 
     def client
       @opts[:client]
@@ -54,7 +41,7 @@ module DatadogBackup
 
     def diff(id)
       current = class_from_id(id).public_send(:get_by_id, id)
-      filesystem = load_by_id(id)
+      filesystem = load_from_file_by_id(id)
       Hashdiff.diff(current, filesystem)
     end
 
@@ -69,13 +56,6 @@ module DatadogBackup
       logger.debug(futures.map(&:value!))
     end
 
-    def filename(id)
-      ::File.join(mydir, "#{id}.#{output_format.to_s}")
-    end
-
-
-
-
     def get_by_id(id)
       raise 'subclass is expected to implement #get_by_id(id)'
     end
@@ -83,30 +63,6 @@ module DatadogBackup
     def initialize(opts)
       @opts = opts
       ::FileUtils.mkdir_p(mydir)
-    end
-
-    def dump(object)
-      if output_format == :json
-        JSON.pretty_generate(object)
-      elsif output_format == :yaml
-        YAML.dump(object)
-      else
-        raise "invalid output_format specified or not specified"
-      end
-    end
-
-    def load(string)
-      if output_format == :json
-        JSON.load(string)
-      elsif output_format == :yaml
-        YAML.load(string)
-      else
-        raise "invalid output_format specified or not specified"
-      end
-    end
-
-    def load_by_id(id)
-      load(::File.read(find_file!(id)))
     end
 
     def logger
@@ -117,15 +73,6 @@ module DatadogBackup
       self.class.to_s.split(':').last.downcase
     end
 
-    def mydir
-      ::File.join(backup_dir,myclass)
-    end
-
-    # Either :json or :yaml
-    def output_format
-      @opts[:output_format]
-    end
-
     def restore
       restore!
     end
@@ -134,12 +81,5 @@ module DatadogBackup
     # subclass is expected to implement #restore!
     ##
 
-    def write(data, filename)
-      logger.info "Backing up #{filename}"
-      file = ::File.open(filename, 'w')
-      file.write(data)
-    ensure
-      file.close
-    end
   end
 end
