@@ -9,6 +9,13 @@ module.exports = {
       }
     ],
     [
+      "semantic-release-rubygem",
+      {
+        "gemPublish": false,
+        "gemFileDir": "."
+      }
+    ],
+    [
       "@semantic-release/github",
       {
         "assets": [
@@ -16,6 +23,11 @@ module.exports = {
             "path": "datadog_backup.zip",
             "name": "datadog_backup.${nextRelease.version}.zip",
             "label": "Full zip distribution"
+          },
+          {
+            "path": "datadog_backup.gem",
+            "name": "datadog_backup.${nextRelease.version}.gem",
+            "label": ".gem build"
           }
         ]
       }
