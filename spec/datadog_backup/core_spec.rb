@@ -83,8 +83,11 @@ describe DatadogBackup::Core do
       allow(core).to receive(:api_service).and_return(api_service_double)
       allow(core).to receive(:api_version).and_return('v1')
       allow(core).to receive(:api_resource_name).and_return('dashboard')
-      expect(api_service_double).to receive(:request).with(Net::HTTP::Post, '/api/v1/dashboard', nil, { 'a' => 'b' },
-        true).and_return(['200', { 'id' => 'whatever-id-abc' }])
+      expect(api_service_double).to receive(:request).with(Net::HTTP::Post,
+                                                           '/api/v1/dashboard',
+                                                           nil,
+                                                           { 'a' => 'b' },
+                                                           true).and_return(['200', { 'id' => 'whatever-id-abc' }])
       subject
     end
   end
@@ -96,9 +99,11 @@ describe DatadogBackup::Core do
       allow(core).to receive(:api_service).and_return(api_service_double)
       allow(core).to receive(:api_version).and_return('v1')
       allow(core).to receive(:api_resource_name).and_return('dashboard')
-      expect(api_service_double).to receive(:request).with(Net::HTTP::Put, '/api/v1/dashboard/abc-123-def', nil,
-        { 'a' => 'b' }, true).and_return(['200',
-        { 'id' => 'whataver-man-thats-like-your-opinion' }])
+      expect(api_service_double).to receive(:request).with(Net::HTTP::Put,
+                                                           '/api/v1/dashboard/abc-123-def',
+                                                           nil,
+                                                           { 'a' => 'b' },
+                                                           true).and_return(['200', { 'id' => 'whatever-id-abc' }])
       subject
     end
   end
@@ -108,20 +113,16 @@ describe DatadogBackup::Core do
       allow(core).to receive(:api_service).and_return(api_service_double)
       allow(core).to receive(:api_version).and_return('api-version-string')
       allow(core).to receive(:api_resource_name).and_return('api-resource-name-string')
-      allow(api_service_double).to receive(:request).with(
-        Net::HTTP::Get,
-        '/api/api-version-string/api-resource-name-string/abc-123-def',
-        nil,
-        nil,
-        false
-      ).and_return(['200', { test: :ok }])
-      allow(api_service_double).to receive(:request).with(
-        Net::HTTP::Get,
-        '/api/api-version-string/api-resource-name-string/bad-123-id',
-        nil,
-        nil,
-        false
-      ).and_return(['404', { error: :blahblah_not_found }])
+      allow(api_service_double).to receive(:request).with(Net::HTTP::Get,
+                                                          '/api/api-version-string/api-resource-name-string/abc-123-def',
+                                                          nil,
+                                                          nil,
+                                                          false).and_return(['200', { test: :ok }])
+      allow(api_service_double).to receive(:request).with(Net::HTTP::Get,
+                                                          '/api/api-version-string/api-resource-name-string/bad-123-id',
+                                                          nil,
+                                                          nil,
+                                                          false).and_return(['404', { error: :blahblah_not_found }])
       allow(core).to receive(:load_from_file_by_id).and_return({ 'load' => 'ok' })
     end
 
@@ -135,23 +136,15 @@ describe DatadogBackup::Core do
 
     context 'when id does not exist' do
       before(:each) do
-        allow(api_service_double).to receive(:request).with(
-          Net::HTTP::Put,
-          '/api/api-version-string/api-resource-name-string/bad-123-id',
-          nil, { 'load' => 'ok' },
-          true
-        ).and_return(
-          ['404', { 'Error' => 'my not found' }]
-        )
-        allow(api_service_double).to receive(:request).with(
-          Net::HTTP::Post,
-          '/api/api-version-string/api-resource-name-string',
-          nil,
-          { 'load' => 'ok' },
-          true
-        ).and_return(
-          ['200', { 'id' => 'my-new-id' }]
-        )
+        allow(api_service_double).to receive(:request).with(Net::HTTP::Put,
+                                                            '/api/api-version-string/api-resource-name-string/bad-123-id',
+                                                            nil, { 'load' => 'ok' },
+                                                            true).and_return(['404', { 'Error' => 'my not found' }])
+        allow(api_service_double).to receive(:request).with(Net::HTTP::Post,
+                                                            '/api/api-version-string/api-resource-name-string',
+                                                            nil,
+                                                            { 'load' => 'ok' },
+                                                            true).and_return(['200', { 'id' => 'my-new-id' }])
       end
 
       subject { core.restore('bad-123-id') }
