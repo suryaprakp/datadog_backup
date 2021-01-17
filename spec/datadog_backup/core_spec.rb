@@ -7,7 +7,7 @@ describe DatadogBackup::Core do
   let(:client_double) { double }
   let(:tempdir) { Dir.mktmpdir }
   let(:core) do
-    DatadogBackup::Core.new(
+    described_class.new(
       action: 'backup',
       api_service: api_service_double,
       client: client_double,
@@ -21,6 +21,7 @@ describe DatadogBackup::Core do
 
   describe '#client' do
     subject { core.client }
+
     it { is_expected.to eq client_double }
   end
 
@@ -41,14 +42,15 @@ describe DatadogBackup::Core do
   end
 
   describe '#diff' do
-    before(:example) do
+    subject { core.diff('diff') }
+
+    before do
       allow(core).to receive(:get_by_id).and_return({ 'text' => 'diff1', 'extra' => 'diff1' })
       core.write_file('{"text": "diff2", "extra": "diff2"}', "#{tempdir}/core/diff.json")
     end
 
-    subject { core.diff('diff') }
     it {
-      is_expected.to eq <<~EOF
+      expect(subject).to eq <<~EOF
          ---
         -extra: diff1
         -text: diff1
@@ -60,11 +62,13 @@ describe DatadogBackup::Core do
 
   describe '#except' do
     subject { core.except({ a: :b, b: :c }) }
+
     it { is_expected.to eq({ a: :b, b: :c }) }
   end
 
   describe '#initialize' do
     subject { core }
+
     it 'makes the subdirectories' do
       expect(FileUtils).to receive(:mkdir_p).with("#{tempdir}/core")
       subject
@@ -73,11 +77,13 @@ describe DatadogBackup::Core do
 
   describe '#myclass' do
     subject { core.myclass }
+
     it { is_expected.to eq 'core' }
   end
 
   describe '#create' do
     subject { core.create({ 'a' => 'b' }) }
+
     example 'it calls Dogapi::APIService.request' do
       stub_const('Dogapi::APIService::API_VERSION', 'v1')
       allow(core).to receive(:api_service).and_return(api_service_double)
@@ -94,6 +100,7 @@ describe DatadogBackup::Core do
 
   describe '#update' do
     subject { core.update('abc-123-def', { 'a' => 'b' }) }
+
     example 'it calls Dogapi::APIService.request' do
       stub_const('Dogapi::APIService::API_VERSION', 'v1')
       allow(core).to receive(:api_service).and_return(api_service_double)
@@ -109,7 +116,7 @@ describe DatadogBackup::Core do
   end
 
   describe '#restore' do
-    before(:each) do
+    before do
       allow(core).to receive(:api_service).and_return(api_service_double)
       allow(core).to receive(:api_version).and_return('api-version-string')
       allow(core).to receive(:api_resource_name).and_return('api-resource-name-string')
@@ -128,6 +135,7 @@ describe DatadogBackup::Core do
 
     context 'when id exists' do
       subject { core.restore('abc-123-def') }
+
       example 'it calls out to update' do
         expect(core).to receive(:update).with('abc-123-def', { 'load' => 'ok' })
         subject
@@ -135,7 +143,9 @@ describe DatadogBackup::Core do
     end
 
     context 'when id does not exist' do
-      before(:each) do
+      subject { core.restore('bad-123-id') }
+
+      before do
         allow(api_service_double).to receive(:request).with(Net::HTTP::Put,
                                                             '/api/api-version-string/api-resource-name-string/bad-123-id',
                                                             nil, { 'load' => 'ok' },
@@ -147,7 +157,6 @@ describe DatadogBackup::Core do
                                                             true).and_return(['200', { 'id' => 'my-new-id' }])
       end
 
-      subject { core.restore('bad-123-id') }
       example 'it calls out to create then saves the new file and deletes the new file' do
         expect(core).to receive(:create).with({ 'load' => 'ok' }).and_return({ 'id' => 'my-new-id' })
         expect(core).to receive(:get_and_write_file).with('my-new-id')
